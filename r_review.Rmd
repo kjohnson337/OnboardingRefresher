@@ -14,7 +14,9 @@ Then move the data file you downloaded into your project folder.
 Load the tidyverse, janitor and lubridate packages.
 
 ```{r}
-
+library(tidyverse)
+library(janitor)
+library(lubridate)
 ```
 
 ### Load data
