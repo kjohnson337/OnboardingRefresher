@@ -24,7 +24,7 @@ library(lubridate)
 Load your data into an object called 'dispatches'.
 
 ```{r}
-
+dispatches <- read_csv("~/Box/Roper Lab/OnboardingRefresher/LPD_Dispatch_Records.csv")
 ```
 
 #### Fix column names
@@ -32,7 +32,7 @@ Load your data into an object called 'dispatches'.
 Use janitor to make all column names comply with R preferred style - all lowercase and underscores between words.
 
 ```{r}
-
+dispatches %>% clean_names()
 ```
 
 
@@ -42,26 +42,43 @@ Use janitor to make all column names comply with R preferred style - all lowerca
 
 Look at the documentation for the data. Do all the columns appear to be formatted correctly?
 
+  No, they are not. 
+
 Use lubridate to change the RPT_Date column to ymd format.
 
 ```{r}
-
+lubridatedispatches <-dispatches %>% mutate(
+  CleanDate= ymd(RPT_Date)
+)
 ```
 
 Find the 13 rows that failed to parse. Why?
-
+  The 13 rows failed to parse because the information was not availabele (?)
+  
 How many cases are in the data? How many unique cases?
 
-```{r}
+    There are 401,137 cases in this data. (see coding below)
 
+```{r}
+lubridatedispatches %>% group_by(OBJECTID) %>% tally()
+```
+    There are 401,116 unique cases in this data. (see coding below)
+
+```{r}
+lubridatedispatches %>% group_by(CASE_) %>% tally()
 ```
 
 #### Arranging
 
 What are the oldest and most recent cases in the data?
 
-```{r}
+  The most recent case is Case C0-X00014 from March 12, 2020. The oldest case is case B7-000001 from January 1, 2017. See code below 
 
+```{r}
+lubridatedispatches %>% arrange(desc(CASE_))
+```
+```{r}
+lubridatedispatches %>% arrange((CASE_))
 ```
 
 #### Filtering
@@ -69,13 +86,13 @@ What are the oldest and most recent cases in the data?
 Create a dataframe called 'missing' with just missing persons cases in it.
 
 ```{r}
-
+missing <- lubridatedispatches %>% filter(CFS_LEGEND== "MISSING PERSON")
 ```
 
 Use the str_detect function to find all the cases that mention O Street in the address.
 
 ```{r}
-
+missing %>% filter(str_detect(BLOCK_ADDRESS,"O ST")) 
 ```
 
 #### Counting
@@ -83,22 +100,84 @@ Use the str_detect function to find all the cases that mention O Street in the a
 Use the count() function to find the number of dispatches to each neighborhood. 
 
 ```{r}
-
+lubridatedispatches %>%
+  group_by(NEIGHBOR) %>%
+  summarise(
+    count = n()
+  )
 ```
 
 Which neighborhood appears the most in the data?
 
+    The actual labeled neighborhood with the most data is downtown. Otherwise, N/A has the most. 
+
 Do you see any limitations of this data when we are counting by neighborhood?
+
+    Not all data is assigned to a neighborhood.
 
 #### Mutating
 
 Create a new column called 'year' that includes just the year from date_fixed.
 
 ```{r}
-
+dispatches3 <- lubridatedispatches %>% 
+  mutate(year(CleanDate))
 ```
 
 Use the case_when function to create a new categorical variable dividing the rpt_time column into the 24 hours of the day. Be careful to make sure that each time fits into only one value of the new variable.
+
+```{r}
+dispatches3 <- dispatches3 %>%
+  mutate(hour = case_when(
+    as.numeric(RPT_Time) >= 0 & as.numeric(rpt_time) <= 59 ~ 0,
+    as.numeric(rpt_time) >= 100 & as.numeric(rpt_time) <= 159 ~ 1,
+    as.numeric(rpt_time) >= 200 &
+as.numeric(rpt_time) <= 259 ~ 2,
+    as.numeric(rpt_time) >= 300 &
+as.numeric(rpt_time) <=359 ~ 3,
+    as.numeric(rpt_time) >=400 &
+as.numeric(rpt_time) <= 459 ~ 4,
+    as.numeric(rpt_time) >= 500 &
+as.numeric(rpt_time) <=559 ~ 5,
+    as.numeric(rpt_time) >=600 &
+as.numeric(rpt_time) <=659 ~ 6,
+    as.numeric(rpt_time) >=700 &
+as.numeric(rpt_time) <= 759 ~ 7,
+    as.numeric(rpt_time) >=800 &
+as.numeric(rpt_time) <= 859 ~ 8,
+    as.numeric(rpt_time) >= 900 &
+as.numeric(rpt_time) <= 959 ~ 9,
+    as.numeric(rpt_time) >= 1000 &
+as.numeric(rpt_time) <= 1059 ~ 10,
+    as.numeric(rpt_time) >= 1100 &
+as.numeric(rpt_time) <= 1159 ~ 11,
+    as.numeric(rpt_time) >= 1200 &
+as.numeric(rpt_time) <= 1259 ~ 12,
+    as.numeric(rpt_time) >= 1300 &
+as.numeric(rpt_time) <= 1359 ~ 13,
+    as.numeric(rpt_time) >= 1400 &
+as.numeric(rpt_time) <= 1459 ~ 14,
+    as.numeric(rpt_time) >=1500 &
+as.numeric(rpt_time) <= 1559 ~ 15,
+    as.numeric(rpt_time) >= 1600 &
+as.numeric(rpt_time) <= 1659 ~ 16,
+    as.numeric(rpt_time) >= 1700 &
+as.numeric(rpt_time) <= 1759 ~ 17,
+    as.numeric(rpt_time) >= 1800 &
+as.numeric(rpt_time) <= 1859 ~ 18,
+    as.numeric(rpt_time) >= 1900 &
+as.numeric(rpt_time) <= 1959 ~ 19,
+    as.numeric(rpt_time) >= 2000 &
+as.numeric(rpt_time) <= 2059 ~ 20,
+    as.numeric(rpt_time) >= 2100 &
+as.numeric(rpt_time) <= 2159 ~ 21,
+    as.numeric(rpt_time) >= 2200 &
+as.numeric(rpt_time) <= 2259 ~ 22,
+    as.numeric(rpt_time) >= 2300 &
+as.numeric(rpt_time) <= 2359 ~ 23))
+
+                   
+```
 
 What hour of the day sees the most police action?
 
@@ -106,23 +185,62 @@ What hour of the day sees the most police action?
 
 How many drug-related dispatches occurred in each year of the data?
 
-```{r}
+    2017- 3300
+    2018- 3436
+    2019- 3185
+    2020- 1252 (code below)
 
+```{r}
+lubridatedispatches %>%
+  group_by(year(CleanDate)) %>%
+  filter(CFS_LEGEND == "DRUGS") %>%
+  summarise(
+    total=n()
 ```
 
 Create a new column called month. Then using group_by and summarize, find the maximum, minimum and average number of dispatches per month.
 
-```{r}
+    Maximum numbers of calls per month- 11349
+  Minimum number of calls per month- 13
+  Average number of calls per month- 9328.767
 
+```{r}
+dispatches4 <- dispatches3 %>%
+  mutate(
+    month = month(CleanDate)
+  )
 ```
 
+The code directly above created Month as a new column. 
 
+```{r}
+ dispatches4 %>% 
+  mutate(Month = floor_date(CleanDate, "month")) %>% 
+  group_by(`Month`) %>% 
+    tally () %>% 
+  summarise(
+    max = max(`n`),
+    min = min(`n`),
+    avg_dispatch = mean(`n`)
+  )
+    
+  
+```
 #### Percent change
 
 What was the percent change in total number of dispatches from 2018 to 2019?
 
-```{r}
+  The percent change is .82% (see code below)
 
+```{r}
+dispatches4 %>%
+  group_by(year(CleanDate)) %>%
+  tally()
+```
+
+```{r}
+((118088-117120)/117120)*100
+  
 ```
 
 
@@ -131,7 +249,10 @@ What was the percent change in total number of dispatches from 2018 to 2019?
 Using ggplot, create a line chart of the number of cases per month and year. Choose an appropriate color for the line, add a title and labels and a choose a theme.
 
 ```{r}
-
+dispatches4 %>%
+  group_by(year(CleanDate)) %>%
+  tally()
+ggplot() + geom_line(data=dispatches4, aes(x= CleanDate, y=total))
 ```
 
 What do you observe about the yearly pattern of police dispatches? Why do you suppose that is?
@@ -141,6 +262,11 @@ What do you observe about the yearly pattern of police dispatches? Why do you su
 Using ggplot, create a column chart that shows the five most common categories in the cfs_legend column. Apply appropriate design decisions to your chart.
 
 ```{r}
-
+dispatches4 %>% group_by(CFS_LEGEND) %>% summarise(
+total = n()
+) %>% top_n(5, total) -> topdispatches
+```
+```{r}
+ggplot() + geom_bar(data=topdispatches, aes(x=CFS_LEGEND, weight=total))
 ```
 
